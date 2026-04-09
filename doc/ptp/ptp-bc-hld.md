@@ -1,4 +1,4 @@
-# PTP Boundary Clock Feature0
+# PTP Boundary Clock Feature
 
 ## High Level Design document
 
@@ -9,11 +9,21 @@
 - [Scope](#scope)
 - [Abbreviations](#abbreviations)
 - [1 Introduction](#1-introduction)
-  - [1.1 Feature Overview](#11-feature-overview)
-- [2 High Level Design](#2-high-level-design)
-  - [2.1 Functionality](#21-functionality)
-  - [2.2 Multi-ASIC extensions](#22-multi-asic-extensions)
-  - [2.3 Chassis extensions](#23-chassis-extensions)
+- [2 Requirements Roadmap](#2-requirements-roadmap)
+  - [2.1 General Requirements](#21-general-requirements)
+  - [2.2 Phase 1](#22-phase-1)
+  - [2.3 Phase 2](#23-phase-2)
+  - [2.4 Phase 3 and Future](#24-phase-3-and-future)
+- [3 Feature](#3-feature)
+  - [3.1 Operation Flow](#31-operation-flow)
+  - [3.2 Multi-ASIC and Chassis extensions](#32-multi-asic-and-chassis-extensions)
+- [4 Modules](#4-modules)
+  - [4.1 PTP Container](#41-ptp-container)
+  - [4.1 PTP orchagent](#41-ptp-orchagent)
+  - [4.1 SAI Updates](#41-sai-updates)
+  - [4.2 ASIC Device Driver Updates](#42-asic-device-driver-updates)
+  - [4.3 Linux Ethernet Device Update](#43-linux-ethernet-device-update)
+  - [4.4 PHC Device](#44-phc-device)
 
 ## Revision
 
@@ -23,47 +33,61 @@
 
 ## About this manual
 
-This document provides an overview for PTPv2 boundary clock feature in SONiC.
+This document provides an overview of the PTPv2 feature in SONiC.
 
 ## Scope
 
-This document is the high level design document for running a SONiC switch as a PTPv2 boundary clock.  It provides an overview of feature configuration and operation.  More detailed design and implementation, configuration data models, state data models, and platform-specific attribue data models are not within the scope of the document.
+This document is the high level design document for running a SONiC switch as a PTPv2 boundary/ordinary/transparent clock.  It provides an overview of feature configuration and operation and its flow through SONiC and its sub-systems. This document has a companion document detailing the data models that are used in configuration, application states, and operations states. Those data models will not be part of this document.
 
 ## Abbreviations
 
-| Term  | Meaning                                                             |
-| ----- | ------------------------------------------------------------------- |
-| ASIC  | Application-Specific Integrated Circuit                             |
-| BC    | Boundary Clock                                                      |
-| BMCA  | Best Master Clock Algorithm                                         |
-| DB    | Database                                                            |
-| CLI   | Command-line Interface                                              |
-| pmc   | PTP Management Client; a linux-ptp executable                       |
-| PHC   | Physical Hardware Clock; Linux timing sychronization infrastructure |
-| PTP   | Precision Time Protocol                                             |
-| PTPv2 | PTP Version 2; IEEE-1588 2008 specification with 2019 enhancements  |
-| ptp4l | PTP daemon for Linux; a linux-ptp executable                        |
-| SAI   | Switch Abstraction Interface                                        |
-| SONiC | Software for Open Networking in the Cloud                           |
-| YANG  | Yet Another Next Generation                                         |
+| Term  | Meaning                                                              s|
+| ----- | -------------------------------------------------------------------  |
+| ASIC  | Application-Specific Integrated Circuit                              |
+| BC    | Boundary Clock                                                       |
+| BMCA  | Best Master Clock Algorithm                                          |
+| DB    | Database                                                             |
+| CLI   | Command-line Interface                                               |
+| OC    | Ordinary Clock                                                       |
+| pmc   | PTP Management Client; a linux-ptp executable                        |
+| PHC   | Physical Hardware Clock; Linux timing synchronization infrastructure |
+| PTP   | Precision Time Protocol                                              |
+| PTPv2 | PTP Version 2; IEEE-1588 2008 specification with 2019 enhancements   |
+| ptp4l | PTP daemon for Linux; a linux-ptp executable                         |
+| SAI   | Switch Abstraction Interface                                         |
+| SONiC | Software for Open Networking in the Cloud                            |
+| TC    | Transparent Clock                                                    |
+| UDS   | Unix Domain Socket                                                   |
+| YANG  | Yet Another Next Generation                                          |
 
 # 1 Introduction
 
-Timing synchronization across nodes in a data center has a variety of applications requiring achieving a corresponding level of precision and accuracy in synchronization. PTPv2 is the industry standand network protocol for achieving tight timing synchronization over an ethernet network.
+Timing synchronization across nodes in a data center supports many applications that require a corresponding level of precision and accuracy. PTPv2 is the industry-standard network protocol for achieving tight timing synchronization over an Ethernet network. Achieving such tight timing synchronization and scaling the timing synchronization to all nodes requires running PTP boundary clocks or PTP transparent clocks on the network switches.  The PTP feature enables the operator to run PTPv2 boundary clocks or transparent clocks on SONiC switches.
 
-One of the network architectures that can scale timing synchronization over an entire data center is running PTP boundary clocks on network switches. In said network architectures, deploying PTP BCs on network switches share the processing load of handling the PTPv2 protocol and redundancy protection for each other. 
+# 2 Requirements Roadmap
 
-The PTPv2 boundary clock feature enables a data center operator to run PTP boundary clocks on network switches running the SONiC OS. It supports the configuration, tuning, and telemetry monitoring required to achieve and maintain targeted timing synchronization.
+Development of the PTP feature can take place in phases targeting more specific use cases using a narrower subset of hardware devices.
 
-## 1.1 Feature Overview
+# 2.1 General Requirements
+The PTP feature will support PTPv2 and will not support the older PTP protocol.  It supports PTP over ports attached to ASICs.  It is not applicable to management Ethernet ports.
 
-The PTP BC is an [optional feature](../optional-feature-control/Optional-Feature-Control.md) that can be enabled or disabled.  When the PTP BC feature is enabled, SONiC will launch the PTP BC container on a per-asic namespace basis.  The PTP BC container runs a PTPv2 boundary clock compliant with the IEEE-1588 standard, use the default BMCA, and uses open source ptp4l.
+# 2.2 Phase 1
+Delivery date for phase 1 is in the 26.11 version of SONiC. The target use case is timing synchronization to 1us margin-of-error from GM to nodes with PTPv2 BCs deployed on SONiC network devices. The applicable hardware is network devices that are single devices with single ASICs. Hardware timestamping support in the network devices is required and is only configured for one-step timestamping.
 
-## 1.2 Architecture
+# 2.3 Phase 2
+Delivery date for phase 2 is after the 26.11 version of SONiC.  Phase 2 is an enhancement on phase 1, adding multi-device systems and multi-ASIC network devices to the pool of applicable hardware.
+
+# 2.4 Phase 3 and Future
+Delivery date for phase 3 is unspecified. Phase 3 is currently the general use case, targets the full range of accuracy in synchronization, and is applicable to all permutations of SONiC hardware.
+
+## 3 Feature
+PTP is an [optional feature application](../optional-feature-control/Optional-Feature-Control.md) that can be enabled or disabled.  When the PTP feature is enabled, SONiC will launch its PTP container on a per-ASIC namespace basis.  The PTP container operates as a PTPv2 boundary, ordinary, or transparent clock, depending on the configuration. The implementation is compliant with the IEEE-1588-2008 standard, uses the default BMCA, and is implemented with open-source ptp4l.
+
+## 3.1 Operation Flow
 ``` mermaid
 
 ---
-title: PTP Boundary Clock architecture
+title: PTP operational flow
 ---
   flowchart TB
     direction TB
@@ -77,95 +101,86 @@ title: PTP Boundary Clock architecture
     subgraph SONIC
       direction LR
 
-      subgraph Redis
-          direction TB
-          config_db[(CONFIG_DB)]
-          state_db[(STATE_DB)]
-          app_db[(APPL_DB)]
-          counter_db[(COUNTER_DB)]
+      subgraph redis [Redis Database]
+        direction TB
+        config_db[(CONFIG_DB)]
+        state_db[(STATE_DB)]
+        appl_db[(APPL_DB)]
+        counter_db[(COUNTERS_DB)]
+        asic_db[(ASIC_DB)]
       end
 
-      subgraph ptpbc_service [ptp boundary clock]
-          subgraph ptpbc [ptp bc container]
-              appcfg(app manager)
-              ptp4l(ptp4l)
-              telemetry_(telemetry feed)
-          end
-
-          appcfg-->ptp4l
-          ptp4l-->telemetry_
+      subgraph ptp [PTP container]
+        appcfg[PTP app manager]
+        ptp4l[ptp4l]
+        telemetry_[telemetry feed]
+        appcfg-->ptp4l
+        ptp4l-->telemetry_
       end
 
       subgraph syncd container
-          syncd(syncd)
-          sai(SAI)
+        syncd[syncd]
+        sai[[SAI]]
 
-          syncd --> sai
+        syncd --> sai
       end
 
       subgraph swss_service [swss container]
-          ptp_orchagent(ptp orchagent)
+        ptp_orchagent[PTP orchagent]
       end
     end
 
-    subgraph Linux
+    subgraph kernel [Linux Kernel]
       direction LR
-      asic_dev(ASIC drivers)
-      eth_dev(Ethernet Device)
-      phc_dev(PHC Device)
+      asic_dev([ASIC drivers])
+      eth_dev([Ethernet Device])
+      phc_dev([PHC Device])
       asic_dev --> eth_dev
       eth_dev-->phc_dev
     end
 
-    config_db -->syncd
     config_db --> appcfg
-    appcfg --> app_db
+    appcfg --> appl_db
+    appl_db --> ptp_orchagent
+    ptp_orchagent -->asic_db
+    asic_db -->syncd
     sai --> asic_dev
-    input-->config_db
+    input --> config_db
     input<-->state_db
     input<-->counter_db
     telemetry_-->state_db
     telemetry_-->counter_db
-    ptp4l-->eth_dev
-    ptp4l-->phc_dev
-
+    ptp4l <-->eth_dev
+    ptp4l <--> phc_dev
 ```
 
-# 1.3 Additional Platform-Specific Parameters
+The core functionality of the PTP feature happens in the PTP container.  When the PTP feature is enabled and setup prerequisites are met, SONiC will launch the PTP service, one instance of the PTP container for every ASIC namespace.  When a PTP container starts, the PTP app manager starts and reads the configuration from CONFIG_DB for its instance.
 
-Achieving certain levels of precision and accuracy will require hardware timestamping support in the switch ASIC, high frequency fidelity in timing crystals, appropriate hardware design, and other tuning parameters. These options exist. The specific options fall outside the scope of this document.
+The PTP app manager will request to enable PTP ports and setup timestamping on those PTP ports.  This will proceed via SONiC's swss and syncd containers.  The PTP app manager will write a ptp4l configuration file for ptp4l and launch the process.
 
-# 2 High Level Design
+Once ptp4l is running and healthy, a telemetry feed process will subscribe to status and statistics from the ptp4l process with pmc or via ptp4l's UDS interface.  The telemetry feed process will push status and statistics to STATE_DB and COUNTERS_DB.
 
-The high level design will reflect the description and diagram found in [Architecture](#12-architecture) section.
-The key piece of the PTPv2 boundary clock feature is packaged as a container, PTP BC container.  When PTPv2 boundary clock feature is enabled, SONiC will launch the PTP BC service; SONiC launches an instance of the PTP BC container for every ASIC namespace.
+## 3.2 Multi-ASIC and Chassis extensions
+The PTP feature on Multi-ASIC and Chassis network devices mostly operates under the same operation flow as single-device, single-ASIC network devices.  There will be more than one active instance of the PTP container and ptp4l may send and accept PTP packets to other ptp4l instances over system ports.
 
-When the PTP BC container starts, ptp app manager will read from CONFIG_DB and generate a configuration for ptp4l. When ptp app manger finds that a PTP port in the ASIC namespace is enabled, ptp app manager will generate a ptp4l configuration and launch the ptp4l executable.  The ptp4l executable is configured to run in boundary clock mode.  The ptp4l executable interacts with Linux Ethernet devices and with Linux PHC devices under linux. The Linux Ethernet devices and Linux PHC devices will be created for ptp4l by syncd via SAI calls.
+The SAI and ASIC drivers may require updates to support hardware timestamping and related configurations in order to work with the internal system ports.
 
-After the ptp app manager launches ptp4l executable, ptp app manager monitors CONFIG_DB and STATE_DB for incremental configuration changes and launches a telemetry feed executable.  All incremental configuration are applied to the running ptp4l without service interruption via pmc.  The telemetry feed will subscribe to telemetry update with pmc and push status and statistics to STATE_DB and COUNTER_DB.
+## 4 Modules
 
-## 2.1 Base Functionality
+# 4.1 PTP Container
+The PTP Container is a new component.  It has the PTP app manager, ptp4l, and a telemetry feed process.
 
-The base case is SONiC running on a single device with a single ASIC. In this use case, one instance of the PTP BC container is launched by SONiC.
+# 4.1 PTP orchagent
+The PTP orchagent is a new component in the swss container.  The PTP orchagent will read PTP state from APPL_DB for PTP port configurations and update ASIC_DB for PTP port configurations.
 
-## 2.1.1 Multi-ASIC extensions
+# 4.1 SAI Updates
+The SAI is an existing library component with vendor-specific implementation. To support the PTP feature, SAI will need to add interfaces to support PTP port configurations.
 
-In case of multi ASIC SONiC devices, multiple instances of the PTP container will be running, one instance for each of the asic namespaces.  The ptp4l executables running within the containers will listen to the other ptp4l executables - all boundary clocks - over the internally connecting system port and may synchronize with any if selected via the BCMA.  The interally connecting system port is enabled in the ASIC namespace by default.
+## 4.2 ASIC Device Driver Updates
+The ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver will need to create and maintain Linux Ethernet devices that have associated Linux PHC devices.  The ASIC device driver will be invoked from SAI implementations.
 
-## 2.1.2 Chassis extensions
+## 4.3 Linux Ethernet Device Update
+The Ethernet device is an existing standard Linux device infrastructure object representing Ethernet ports. When applicable, the Ethernet device will advertise hardware timestamping capability and have an associated Linux PHC device.  ptp4l interacts directly with the Linux Ethernet device.
 
-In a chassis implementation, linecards will be PTP containers, one instance for each of the asic namespaces.  The ptp4l executables will listen to other boundary clocks in the chassis over the internally connecting system port and may synchronize with any  if selected via the BCMA. The interally connecting system port is enabled in the ASIC namespace by default.
-
-## 2.2 Modules
-
-# SAI
-The SWSS will affect needed configuration changes on the ASIC device via the SAI, a vendor agnostic middleware interface. The vendor-specific implementation of the SAI will interact with the vendor-specific ASIC device driver.
-
-## 2.2.1 ASIC Device
-The ASIC device driver is a vendor-specific component that will create, configure, and maintain linux ethernet device and linux PHC devices.
-
-## 2.2.2 Linux Ethernet Device
-The ethernet device is a standard linux infracture for ethernet ports. When applicable, the ethernet device will advertise hardware timestamping capability and have an associated linux PHC device.  ptp4l interacts directly with the linux ethernet device.
-
-## 2.2.2 PHC Device
-The PHC device is a standard linux infracture for ptp clocks. ptp4l interacts directly with the linux PHC device.
+## 4.4 PHC Device
+The PHC device is a new standard Linux infrastructure object representing PTP clocks. ptp4l interacts directly with the Linux PHC device.
