@@ -19,18 +19,19 @@
   - [3.2 Multi-ASIC and Chassis extensions](#32-multi-asic-and-chassis-extensions)
 - [4 Modules](#4-modules)
   - [4.1 PTP Container](#41-ptp-container)
-  - [4.1 PTP orchagent](#41-ptp-orchagent)
-  - [4.1 SAI Updates](#41-sai-updates)
-  - [4.2 ASIC Device Driver Updates](#42-asic-device-driver-updates)
-  - [4.3 Linux Ethernet Device Update](#43-linux-ethernet-device-update)
-  - [4.4 PHC Device](#44-phc-device)
+  - [4.2 PTP orchagent](#42-ptp-orchagent)
+  - [4.3 Syncd Updates](#43-syncd-updates)
+  - [4.4 SAI Updates](#44-sai-updates)
+  - [4.5 ASIC Device Driver Updates](#45-asic-device-driver-updates)
+  - [4.6 Linux Ethernet Device Update](#46-linux-ethernet-device-update)
+  - [4.7 PHC Device](#47-phc-device)
 
 ## Revision
 
 
 | Rev | Date | Author     | Change Description |
 | --- | ---- | ---------- | ------------------ |
-| 0.1 |      | Maike Geng | Outline edition    |
+| 0.1 |      | Maike Geng | Initial edition    |
 
 
 ## About this manual
@@ -78,7 +79,7 @@ The PTP feature will support PTPv2 and will not support the older PTP protocol. 
 
 # 2.2 Phase 1
 
-Delivery date for phase 1 is in the 26.11 version of SONiC. The target use case is timing synchronization to within 1us margin-of-error from GM to nodes across 6 layers of SONiC network devices running as PTPv2 BCs. The applicable hardware are network devices that are single devices with single ASICs. Hardware timestamping support in the network devices is required and is only configured for one-step timestamping.
+Delivery date for phase 1 is in the 26.11 version of SONiC. The target use case is timing synchronization to within 1us margin-of-error from GM to nodes through several SONiC network devices running as PTPv2 BCs. The applicable hardware are network devices that are single devices with single ASICs. Hardware timestamping support in the network devices is required and is only configured for one-step timestamping.
 
 # 2.3 Phase 2
 
@@ -187,30 +188,30 @@ The ptp4l processes is [open-source software] (git://git.code.sf.net/p/linuxptp/
 
 The telemetry feed is new process that will read information out of ptp4l through its UDS interface.  It will update STATE_DB and COUNTERS_DB.
 
-# 4.1 PTP orchagent
+# 4.2 PTP orchagent
 
 The PTP orchagent is a new component that is added to the swss container.  The PTP orchagent will read PTP state from APPL_DB for PTP port configurations and update ASIC_DB for PTP port configurations.
 
-# 4.2 Syncd Updates
+# 4.3 Syncd Updates
 
 The syncd is an existing process that subscribes to ASIC_DB and applies changes to ASICs through SAI calls.  To support the PTP feature, syncd will need to support the new PTP port configurations in ASIC_DB and make new SAI calls.
 
-# 4.3 SAI Updates
+# 4.4 SAI Updates
 
 The SAI is an existing library component with vendor-specific implementation. To support the PTP feature, SAI will need to add interfaces to support PTP port configurations.
 
 - SAI API update proposals go to OCP instead?  Do we add something there and link the file here? *
 
-## 4.4 ASIC Device Driver Updates
+## 4.5 ASIC Device Driver Updates
 
 The ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver will create and maintain Linux Ethernet devices that have associated Linux PHC devices.  The ASIC device driver will be invoked from corresponding vendor-specific SAI implementation.
 
-## 4.5 Linux Ethernet Device Update
+## 4.6 Linux Ethernet Device Update
 
 The Ethernet device is an existing standard Linux device infrastructure object representing Ethernet ports. When applicable, the Ethernet device will advertise hardware timestamping capability and have an associated Linux PHC device.  For hardware timestamping support, the Linux Ethernet devices will advertise SOF_TIMESTAMPING_TX_HARDWARE, SOF_TIMESTAMPING_RX_HARDWARE, and SOF_TIMESTAMPING_RAW_HARDWARE capabilities.
 
 ptp4l interacts directly with the Linux Ethernet device.
 
-## 4.6 PHC Device
+## 4.7 PHC Device
 
 The PHC device is a new standard Linux infrastructure object representing PTP clocks. ptp4l interacts directly with the Linux PHC device.
