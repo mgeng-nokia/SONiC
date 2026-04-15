@@ -195,21 +195,15 @@ The PTP orchagent is a new component that is added to the swss container.  The P
 
 # 4.3 Syncd Updates
 
-The syncd is an existing process that subscribes to ASIC_DB and applies changes to ASICs through SAI calls.  To support the PTP feature, syncd will need to support the new PTP port configurations in ASIC_DB and make new SAI calls.
-
-* Does syncd already support the SAI calls that already exist *
+The syncd is an existing process that subscribes to ASIC_DB and applies changes to ASICs through SAI calls.  The required SAI definitions already exist and no changes are necessary.
 
 # 4.4 SAI Updates
 
-The SAI is an existing library component with vendor-specific implementation. SAI already supports PTP modes for switch and ports and no changes are necessary.
+The SAI is an existing library component with vendor-specific implementation. SAI already defines attributes for PTP modes in switch and port objects and no changes are necessary.
 
-* to be removed: To support the PTP feature, SAI will need to add interfaces to support PTP port configurations.
+## 4.5 SAI implementations and ASIC Device Driver Updates
 
-- SAI API update proposals go to OCP instead?  Do we add something there and link the file here? *
-
-## 4.5 ASIC Device Driver Updates
-
-The ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver will create and maintain Linux Ethernet devices that have associated Linux PHC devices.  The ASIC device driver will be invoked from vendor-specific SAI implementation with support for SAI_SWITCH_ATTR_PORT_PTP_MODE on switch objects and SAI_PORT_ATTR_PTP_MODE on port objects.
+The SAI implementation and ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver will create and maintain Linux Ethernet devices that have associated Linux PHC devices.  The ASIC device driver will be invoked from vendor-specific SAI implementation with support for SAI_SWITCH_ATTR_PORT_PTP_MODE on switch objects and SAI_PORT_ATTR_PTP_MODE on port objects.
 
 ## 4.6 Linux Ethernet Device Update
 

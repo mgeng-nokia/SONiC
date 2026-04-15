@@ -86,7 +86,7 @@ PTP_PORT_TABLE:{{ifname}}
 
 # ASIC DB
 
-Using existing SAI definition for PTP timestamping mode.
+This is using existing SAI definition for PTP timestamping mode.
 
 ## Switch PTP Mode Configuration
 ```
@@ -94,7 +94,7 @@ ASIC_STATE:SAI_OBJECT_TYPE_SWITCH:oid:{{oid value}}
      "SAI_SWITCH_ATTR_PORT_PTP_MODE": ("SAI_PORT_PTP_MODE_NONE"|"SAI_PORT_PTP_MODE_SINGLE_STEP_TIMESTAMP"|         "SAI_PORT_PTP_MODE_TWO_STEP_TIMESTAMP")
 
 ```
-This is is the switch level configuration of PTP timestamping mode used in phase 1 and phase 2 of feature development.
+This is the switch level configuration of PTP timestamping mode used in phase 1 and phase 2 of feature development.
 
 ## Port Specific PTP Mode Configuration
 ```
@@ -104,7 +104,7 @@ ASIC_STATE:SAI_OBJECT_TYPE_PORT:oid:{{oid value}}
 }
 
 ```
-This is is the port specific configuration of PTP timestamping mode that can be used in phase 3 of feature development.
+This is the port specific configuration of PTP timestamping mode that can be used in phase 3 of feature development.
 
 # Counters DB
 
