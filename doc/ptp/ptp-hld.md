@@ -1,8 +1,8 @@
 # PTP Feature
 
-## High Level Design document
+### High Level Design document
 
-## Table of Contents
+### Table of Contents
 
 - [Revision](#revision)
 - [About this manual](#about-this-manual)
@@ -26,7 +26,7 @@
   - [4.6 Linux Ethernet Device Update](#46-linux-ethernet-device-update)
   - [4.7 PHC Device](#47-phc-device)
 
-## Revision
+### Revision
 
 
 | Rev | Date | Author     | Change Description |
@@ -34,18 +34,18 @@
 | 0.1 |      | Maike Geng | Initial edition    |
 
 
-## About this manual
+### About this manual
 
 This document provides an overview of the PTPv2 feature in SONiC.
 
-## Scope
+### Scope
 
 This document is the high level design document for running a SONiC switch as a PTPv2 boundary/ordinary/transparent clock.  It provides an overview of feature configuration and operation and its flow through SONiC and its sub-systems. This document has a [companion document](./ptp-data-models.md) detailing the data models used in configuration, application states, and operations states.  The contents of those data models will not be part of this document.
 
-## Abbreviations
+### Abbreviations
 
 
-| Term  | Meaning s                                                            |
+| Term  | Meanings                                                             |
 | ----- | -------------------------------------------------------------------- |
 | ASIC  | Application-Specific Integrated Circuit                              |
 | BC    | Boundary Clock                                                       |
@@ -73,23 +73,23 @@ Timing synchronization across nodes in a data center supports many applications 
 
 Development of the PTP feature can take place in phases targeting more specific use cases using a narrower subset of hardware devices.
 
-# 2.1 General Requirements
+## 2.1 General Requirements
 
 The PTP feature will support PTPv2 and will not support the older PTP protocol.  It supports PTP over ports attached to ASICs.  It is not applicable to management Ethernet ports.
 
-# 2.2 Phase 1
+## 2.2 Phase 1
 
 Delivery date for phase 1 is in the 26.11 version of SONiC. The target use case is timing synchronization to within 1us margin-of-error from GM to nodes through several SONiC network devices running as PTPv2 BCs. The applicable hardware are network devices that are single devices with single ASICs. Hardware timestamping support in the network devices is required and ASICs are only configured for one-step timestamping.
 
-# 2.3 Phase 2
+## 2.3 Phase 2
 
 Delivery date for phase 2 is after the 26.11 version of SONiC.  Phase 2 is an enhancement on phase 1, adding multi-device systems and multi-ASIC network devices to the pool of applicable hardware.
 
-# 2.4 Phase 3 and Future
+## 2.4 Phase 3 and Future
 
 Delivery date for phase 3 is unspecified. Phase 3 is the general use case. It targets the full range of accuracy in synchronization, and the applicable hardware is all permutations of SONiC network devices.
 
-## 3 Feature
+# 3 Feature
 
 PTP is an [optional feature application](../optional-feature-control/Optional-Feature-Control.md) that can be enabled or disabled.  When the PTP feature is enabled, SONiC will launch its PTP container on a per-ASIC namespace basis.  The PTP container operates as a PTPv2 boundary, ordinary, or transparent clock, depending on the configuration. The implementation is compliant with the IEEE-1588-2008 standard, uses the default BMCA, and is implemented with open-source ptp4l.
 
@@ -161,6 +161,8 @@ title: PTP operational flow
     ptp4l <--> phc_dev
 ```
 
+
+
 The core functionality of the PTP feature happens in the PTP container.  When the PTP feature is enabled and setup prerequisites are met, SONiC will launch the PTP service, one instance of the PTP container for every ASIC namespace.
 
 When a PTP container starts, the PTP app manager starts, reads the configuration from CONFIG_DB for its instance, configures the ASIC for PTP operation, writes the configuration for the instance, starts the ptp4l executable, and starts the telemetry feed executable.
@@ -168,6 +170,7 @@ When a PTP container starts, the PTP app manager starts, reads the configuration
 When the telemetry feed process is running, it subscribes to status and statistics from the ptp4l process with pmc or via ptp4l's UDS interface.  The telemetry feed process will push status and statistics to STATE_DB and COUNTERS_DB.
 
 ## 3.2 Phase 1 Limitations
+
 In phase 1 of deliverables, when configuring the ASIC for PTP operation, the PTP app manager configures all external ports of the ASIC for one-step PTP hardware timestamping of unicast IPv4 PTP packets.
 
 ## 3.3 Multi-ASIC and Chassis extensions
@@ -176,9 +179,9 @@ The PTP feature on Multi-ASIC and Chassis network devices mostly operates under 
 
 The SAI and ASIC drivers may require updates to support hardware timestamping and related configurations in order to work with the internal system ports.
 
-## 4 Modules
+# 4 Modules
 
-# 4.1 PTP Container
+## 4.1 PTP Container
 
 The PTP Container is a new container.  It runs three processes, PTP app manager, ptp4l, and telemetry feed.
 
@@ -189,21 +192,21 @@ The ptp4l processes is [open-source software] (git://git.code.sf.net/p/linuxptp/
 
 The telemetry feed is new process that will read information out of ptp4l through its UDS interface.  It will update SONiC databases, STATE_DB and COUNTERS_DB, for status and statistics.
 
-# 4.2 PTP orchagent
+## 4.2 PTP orchagent
 
 The PTP orchagent is a new component that is added to the swss container.  The PTP orchagent will read PTP state from APPL_DB for PTP port configurations and update ASIC_DB for PTP port configurations.
 
-# 4.3 Syncd Updates
+## 4.3 Syncd Updates
 
 The syncd is an existing process that subscribes to ASIC_DB and applies changes to ASICs through SAI calls.  The required SAI definitions already exist and no changes are necessary.
 
-# 4.4 SAI Updates
+## 4.4 SAI Updates
 
 The SAI is an existing library component with vendor-specific implementation. SAI already defines attributes for PTP modes in switch and port objects and no changes are necessary.
 
 ## 4.5 SAI implementations and ASIC Device Driver Updates
 
-The SAI implementation and ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver will create and maintain Linux Ethernet devices that have associated Linux PHC devices.  The ASIC device driver will be invoked from vendor-specific SAI implementation with support for SAI_SWITCH_ATTR_PORT_PTP_MODE on switch objects and SAI_PORT_ATTR_PTP_MODE on port objects.
+The SAI implementation and ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver creates and maintains Linux Ethernet devices that have associated Linux PHC devices.  The ASIC device driver will be invoked from vendor-specific SAI implementation with support for SAI_SWITCH_ATTR_PORT_PTP_MODE on switch objects and SAI_PORT_ATTR_PTP_MODE on port objects.
 
 ## 4.6 Linux Ethernet Device Update
 
