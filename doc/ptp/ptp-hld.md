@@ -4,10 +4,13 @@
 
 ### Table of Contents
 
-- [Revision](#revision)
-- [About this manual](#about-this-manual)
-- [Scope](#scope)
-- [Abbreviations](#abbreviations)
+- [PTP Feature](#ptp-feature)
+    - [High Level Design document](#high-level-design-document)
+    - [Table of Contents](#table-of-contents)
+    - [Revision](#revision)
+    - [About this manual](#about-this-manual)
+    - [Scope](#scope)
+    - [Abbreviations](#abbreviations)
 - [1 Introduction](#1-introduction)
 - [2 Requirements Roadmap](#2-requirements-roadmap)
   - [2.1 General Requirements](#21-general-requirements)
@@ -16,15 +19,17 @@
   - [2.4 Phase 3 and Future](#24-phase-3-and-future)
 - [3 Feature](#3-feature)
   - [3.1 Operation Flow](#31-operation-flow)
-  - [3.2 Multi-ASIC and Chassis extensions](#32-multi-asic-and-chassis-extensions)
-- [4 Modules](#4-modules)
-  - [4.1 PTP Container](#41-ptp-container)
-  - [4.2 PTP orchagent](#42-ptp-orchagent)
-  - [4.3 Syncd Updates](#43-syncd-updates)
-  - [4.4 SAI Updates](#44-sai-updates)
-  - [4.5 ASIC Device Driver Updates](#45-asic-device-driver-updates)
-  - [4.6 Linux Ethernet Device Update](#46-linux-ethernet-device-update)
-  - [4.7 PHC Device](#47-phc-device)
+  - [3.2 Phase 1 Limitations](#32-phase-1-limitations)
+  - [3.3 Multi-ASIC and Chassis extensions](#33-multi-asic-and-chassis-extensions)
+- [4 Configuration](#4-configuration)
+- [5 Modules](#5-modules)
+  - [5.1 PTP Container](#51-ptp-container)
+  - [5.2 PTP orchagent](#52-ptp-orchagent)
+  - [5.3 Syncd Updates](#53-syncd-updates)
+  - [5.4 SAI Updates](#54-sai-updates)
+  - [5.5 SAI implementations and ASIC Device Driver Updates](#55-sai-implementations-and-asic-device-driver-updates)
+  - [5.6 Linux Ethernet Device Update](#56-linux-ethernet-device-update)
+  - [5.7 PHC Device](#57-phc-device)
 
 ### Revision
 
@@ -179,9 +184,37 @@ The PTP feature on Multi-ASIC and Chassis network devices mostly operates under 
 
 The SAI and ASIC drivers may require updates to support hardware timestamping and related configurations in order to work with the internal system ports.
 
-# 4 Modules
+# 4 Configuration
 
-## 4.1 PTP Container
+All ptp4l configuration will be handled by updating /etc/ptp4l.conf file
+
+The following new commands will be introduced in SONiC
+```bash
+Enable/Disable PTP feature on a particular device:
+config feature state ptp enabled/disabled
+
+Enable/disable PTP on a particular interace:
+config ptp port add/remove <interface name>
+
+The following commands will have an entry for ptp
+show feature config 
+show feature status
+
+Show which ports have PTP enabled/disabled:
+show ptp port status
+
+Shows ptp status:
+show ptp status
+
+Shows ptp interface counters:
+show ptp counters <interface name>
+
+Clears ptp counters on all ports:
+clear ptp counters
+```
+# 5 Modules
+
+## 5.1 PTP Container
 
 The PTP Container is a new container.  It runs three processes, PTP app manager, ptp4l, and telemetry feed.
 
@@ -192,26 +225,26 @@ The ptp4l processes is [open-source software] (git://git.code.sf.net/p/linuxptp/
 
 The telemetry feed is new process that will read information out of ptp4l through its UDS interface.  It will update SONiC databases, STATE_DB and COUNTERS_DB, for status and statistics.
 
-## 4.2 PTP orchagent
+## 5.2 PTP orchagent
 
 The PTP orchagent is a new component that is added to the swss container.  The PTP orchagent will read PTP state from APPL_DB for PTP port configurations and update ASIC_DB for PTP port configurations.
 
-## 4.3 Syncd Updates
+## 5.3 Syncd Updates
 
 The syncd is an existing process that subscribes to ASIC_DB and applies changes to ASICs through SAI calls.  The required SAI definitions already exist and no changes are necessary.
 
-## 4.4 SAI Updates
+## 5.4 SAI Updates
 
 The SAI is an existing library component with vendor-specific implementation. SAI already defines attributes for PTP modes in switch and port objects and no changes are necessary.
 
-## 4.5 SAI implementations and ASIC Device Driver Updates
+## 5.5 SAI implementations and ASIC Device Driver Updates
 
 The SAI implementation and ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver creates and maintains Linux Ethernet devices that have associated Linux PHC devices.  The ASIC device driver will be invoked from vendor-specific SAI implementation with support for SAI_SWITCH_ATTR_PORT_PTP_MODE on switch objects and SAI_PORT_ATTR_PTP_MODE on port objects.
 
-## 4.6 Linux Ethernet Device Update
+## 5.6 Linux Ethernet Device Update
 
 The Ethernet device is an existing standard Linux device infrastructure object representing Ethernet ports. When applicable, the Ethernet device will advertise hardware timestamping capability and have an associated Linux PHC device.  For hardware timestamping support, the Linux Ethernet devices will advertise SOF_TIMESTAMPING_TX_HARDWARE, SOF_TIMESTAMPING_RX_HARDWARE, and SOF_TIMESTAMPING_RAW_HARDWARE capabilities.  ptp4l interacts directly with the Linux Ethernet device.
 
-## 4.7 PHC Device
+## 5.7 PHC Device
 
 The PHC device is a new standard Linux infrastructure object representing PTP clocks. ptp4l interacts directly with the Linux PHC device.
