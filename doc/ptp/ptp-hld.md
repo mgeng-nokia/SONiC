@@ -150,7 +150,6 @@ title: PTP operational flow
       packets(PTP packets)
       asic_dev{{ASICs}}
       packets --> asic_dev
-      #linkStyle 5 stroke:blue,stroke-width:1px
     end
 
     config_db --> appcfg
@@ -169,8 +168,6 @@ title: PTP operational flow
     telemetry_ --> counter_db
     ptp4l <--> eth_dev
     ptp4l <--> phc_dev
-
-    #linkStyle 7 stroke:blue,stroke-width:1px
 ```
 
 
