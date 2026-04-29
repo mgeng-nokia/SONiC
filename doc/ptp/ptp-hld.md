@@ -99,14 +99,14 @@ PTP is an [optional feature application](../optional-feature-control/Optional-Fe
 title: PTP operational flow
 ---
   flowchart TB
-    subgraph input [User and Management]
+    subgraph input[User and Management]
       cli[CLI]
       netconf[NetConf Interface]
       restconf[RestConf Interface]
     end
 
     subgraph SONIC
-      subgraph redis [Redis Database]
+      subgraph redis[Redis Database]
         direction TB
         config_db[(CONFIG_DB)]
         state_db[(STATE_DB)]
@@ -115,7 +115,7 @@ title: PTP operational flow
         asic_db[(ASIC_DB)]
       end
 
-      subgraph ptp [PTP container]
+      subgraph ptp[PTP container]
         appcfg[PTP app manager]
         ptp4l[ptp4l]
         telemetry_[telemetry feed]
@@ -132,7 +132,7 @@ title: PTP operational flow
         syncd-- calls -->sai
       end
 
-      subgraph swss_service [swss container]
+      subgraph swss_service[swss container]
         subgraph orchagent
           portorch[[portorch]]
           switchorch[[switchorch]]
@@ -140,13 +140,13 @@ title: PTP operational flow
       end
     end
 
-    subgraph kernel [Linux Kernel]
+    subgraph kernel[Linux Kernel]
       eth_dev([Ethernet Device])
       phc_dev([PHC Device])
       eth_dev-->|associated with|phc_dev
     end
 
-    subgraph hardware [hardware components]
+    subgraph hardware[hardware components]
       phy(PHY)
       asic_dev{{ASICs}}
       phy<==>|IP packets|asic_dev
@@ -160,7 +160,7 @@ title: PTP operational flow
     switchorch-- writes -->asic_db
     asic_db-- subscription -->syncd
     sai-- programs ---asic_dev
-    asic_dev<-->|IP packets|eth_dev
+    asic_dev<==>|IP packets|eth_dev
     input-->config_db
     input<-->state_db
     input<-->counter_db
@@ -287,14 +287,14 @@ clear ptp counters
 
 ## 5.1 PTP Container
 
-The PTP Container is a new container.  It runs three processes, PTP app manager, ptp4l, and telemetry feed.
+The PTP Container is a new container.  It has three processes, PTP app manager, ptp4l, and telemetry feed.
 
 The PTP app manager is a new process that interfaces with SONiC databases, prepares ptp4l configuration and launches ptp4l.
 
 The ptp4l processes is [open-source software] (git://git.code.sf.net/p/linuxptp/code) from the Linux PTP project.  It implements the PTP for Linux using Linux SO_TIMESTAMPING socket option and Linux PTP Hardware Clock subsystem.
 *specify version?*
 
-The telemetry feed is new process that will read information out of ptp4l through its UDS interface.  It will update SONiC databases, STATE_DB and COUNTERS_DB, for status and statistics.
+The telemetry feed is new process that will pool ptp4l through its UDS interface for status and statistics.  It will update SONiC databases, STATE_DB and COUNTERS_DB, for status and statistics.
 
 ## 5.2 orchagent
 
@@ -310,7 +310,7 @@ The SAI is an existing library component with vendor-specific implementation. SA
 
 ## 5.5 SAI implementations and ASIC Device Driver Updates
 
-The SAI implementation and ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver creates and maintains Linux Ethernet devices that have associated Linux PHC devices.  The ASIC device driver will be invoked from vendor-specific SAI implementation with support for SAI_SWITCH_ATTR_PORT_PTP_MODE on switch objects and SAI_PORT_ATTR_PTP_MODE on port objects.
+The SAI implementation and ASIC device driver is an existing vendor-specific component.  To support the PTP feature, the ASIC device driver creates and maintains Linux Ethernet devices that have associated Linux PHC devices.  To support ordinary clock and boundary clock, all Ethernet ports attached to a single ASIC should associate with one Linux PHC device.  The ASIC device driver will be invoked from vendor-specific SAI implementation with support for SAI_SWITCH_ATTR_PORT_PTP_MODE on switch objects and SAI_PORT_ATTR_PTP_MODE on port objects.
 
 ## 5.6 Linux Ethernet Device Update
 
