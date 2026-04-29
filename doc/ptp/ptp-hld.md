@@ -93,13 +93,8 @@ Certain distributed applications require good time synchronize across nodes.  Fo
 PTP is an [optional feature application](../optional-feature-control/Optional-Feature-Control.md) that can be enabled or disabled.  When the PTP feature is enabled, SONiC will launch its PTP container on a per-ASIC namespace basis.  The PTP container operates as a PTPv2 boundary, ordinary, or transparent clock, depending on the configuration. The PTP protocol stack is handled by open-source ptp4l.  The PTP feature implements PTPv2.1 and will not support PTPv1 protocol.  It works on ports attached to ASICs and is not applicable to out-of-band management ports.
 
 ## 2.1 Operational Flow
-```mermaid
-  info
-```
-
 
 ```mermaid
-  info
 ---
 title: PTP operational flow
 ---
@@ -125,15 +120,15 @@ title: PTP operational flow
         ptp4l[ptp4l]
         telemetry_[telemetry feed]
 
-        appcfg -->|launches| ptp4l
-        ptp4l -->|polled by| telemetry_
+        appcfg== launches ==>ptp4l
+        ptp4l-- |polled by| -->telemetry_
       end
 
       subgraph syncd container
         syncd[syncd]
         sai[[SAI]]
 
-        syncd -->|calls| sai
+        syncd-- calls -->sai
       end
 
       subgraph swss_service [swss container]
@@ -147,31 +142,31 @@ title: PTP operational flow
     subgraph kernel [Linux Kernel]
       eth_dev([Ethernet Device])
       phc_dev([PHC Device])
-      eth_dev -->|associated with| phc_dev
+      eth_dev-- |associated with| -->phc_dev
     end
 
     subgraph hardware [hardware components]
       phy(PHY)
       asic_dev{{ASICs}}
-      phy <-->|IP packets| asic_dev
+      phy<== |IP packets| ==>asic_dev
     end
 
-    config_db -->|subscription| appcfg
-    appcfg -->|writes| appl_db
-    appl_db -->|subscription| portorch
-    appl_db -->|subscription| switchorch
-    portorch -->|writes| asic_db
-    switchorch -->|subscription|  asic_db
-    asic_db -->|subscription| syncd
-    sai ---|programs| asic_dev
-    asic_dev <-->|IP packets| eth_dev
-    input --> config_db
-    input <--> state_db
-    input <--> counter_db
-    telemetry_ -->|writes| state_db
-    telemetry_ -->|writes| counter_db
-    ptp4l <-->|PTP packets| eth_dev
-    ptp4l <-->|programs| phc_dev
+    config_db-- |subscription| -->appcfg
+    appcfg-- |writes| -->appl_db
+    appl_db-- |subscription| -->portorch
+    appl_db-- |subscription| -->switchorch
+    portorch-- |writes| -->asic_db
+    switchorch-- |subscription| -->asic_db
+    asic_db-- |subscription| -->syncd
+    sai-- |programs| ---asic_dev
+    asic_dev<-- |IP packets| -->eth_dev
+    input-->config_db
+    input<-->state_db
+    input<-->counter_db
+    telemetry_-- |writes| -->state_db
+    telemetry_-- |writes| -->counter_db
+    ptp4l<== |PTP packets| ==>eth_dev
+    ptp4l<-- |programs and queries| -->phc_dev
 ```
 
 
