@@ -93,11 +93,13 @@ Certain distributed applications require good time synchronize across nodes.  Fo
 PTP is an [optional feature application](../optional-feature-control/Optional-Feature-Control.md) that can be enabled or disabled.  When the PTP feature is enabled, SONiC will launch its PTP container on a per-ASIC namespace basis.  The PTP container operates as a PTPv2 boundary, ordinary, or transparent clock, depending on the configuration. The PTP protocol stack is handled by open-source ptp4l.  The PTP feature implements PTPv2.1 and will not support PTPv1 protocol.  It works on ports attached to ASICs and is not applicable to out-of-band management ports.
 
 ## 2.1 Operational Flow
-
+```mermaid
+  info
+```
 
 
 ```mermaid
-
+  info
 ---
 title: PTP operational flow
 ---
