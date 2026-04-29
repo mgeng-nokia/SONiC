@@ -121,7 +121,8 @@ title: PTP operational flow
         telemetry_[telemetry feed]
 
         appcfg== launches ==>ptp4l
-        ptp4l-- |polled by| -->telemetry_
+        appcfg== launches ==>telemetry_
+        ptp4l-- polled by -->telemetry_
       end
 
       subgraph syncd container
@@ -142,31 +143,31 @@ title: PTP operational flow
     subgraph kernel [Linux Kernel]
       eth_dev([Ethernet Device])
       phc_dev([PHC Device])
-      eth_dev-- |associated with| -->phc_dev
+      eth_dev-- associated with -->phc_dev
     end
 
     subgraph hardware [hardware components]
       phy(PHY)
       asic_dev{{ASICs}}
-      phy<== |IP packets| ==>asic_dev
+      phy<== IP packets ==>asic_dev
     end
 
-    config_db-- |subscription| -->appcfg
-    appcfg-- |writes| -->appl_db
-    appl_db-- |subscription| -->portorch
-    appl_db-- |subscription| -->switchorch
-    portorch-- |writes| -->asic_db
-    switchorch-- |subscription| -->asic_db
-    asic_db-- |subscription| -->syncd
-    sai-- |programs| ---asic_dev
-    asic_dev<-- |IP packets| -->eth_dev
+    config_db-- subscription -->appcfg
+    appcfg-- writes -->appl_db
+    appl_db-- subscription -->portorch
+    appl_db-- subscription -->switchorch
+    portorch-- writes -->asic_db
+    switchorch-- writes -->asic_db
+    asic_db-- subscription -->syncd
+    sai-- programs ---asic_dev
+    asic_dev<-- IP packets -->eth_dev
     input-->config_db
     input<-->state_db
     input<-->counter_db
-    telemetry_-- |writes| -->state_db
-    telemetry_-- |writes| -->counter_db
-    ptp4l<== |PTP packets| ==>eth_dev
-    ptp4l<-- |programs and queries| -->phc_dev
+    telemetry_-- writes -->state_db
+    telemetry_-- writes -->counter_db
+    ptp4l<== PTP packets ==>eth_dev
+    ptp4l<-- programs and queries -->phc_dev
 ```
 
 
