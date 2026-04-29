@@ -121,15 +121,15 @@ title: PTP operational flow
         ptp4l[ptp4l]
         telemetry_[telemetry feed]
 
-        appcfg --> ptp4l
-        ptp4l --> telemetry_
+        appcfg --> |launches| ptp4l
+        ptp4l --> |polled| telemetry_
       end
 
       subgraph syncd container
         syncd[syncd]
         sai[[SAI]]
 
-        syncd --> sai
+        syncd --> |calls| sai
       end
 
       subgraph swss_service [swss container]
@@ -143,31 +143,31 @@ title: PTP operational flow
     subgraph kernel [Linux Kernel]
       eth_dev([Ethernet Device])
       phc_dev([PHC Device])
-      eth_dev --> phc_dev
+      eth_dev --> |associated with| phc_dev
     end
 
     subgraph hardware [hardware components]
-      packets(PTP packets)
+      phy(PHY)
       asic_dev{{ASICs}}
-      packets --> asic_dev
+      phy --> |IP packets| asic_dev
     end
 
-    config_db --> appcfg
-    appcfg --> appl_db
-    appl_db --> portorch
-    appl_db --> switchorch
-    portorch --> asic_db
-    switchorch --> asic_db
-    asic_db -->syncd
-    sai --- asic_dev
-    asic_dev <--> eth_dev
+    config_db --> |subscribed| appcfg
+    appcfg --> |updates| appl_db
+    appl_db --> |subscribed| portorch
+    appl_db --> |subscribed| switchorch
+    portorch --> |updates| asic_db
+    switchorch --> |updates|  asic_db
+    asic_db --> |subscribed| syncd
+    sai --- |programs| asic_dev
+    asic_dev <--> |IP packets| eth_dev
     input --> config_db
     input <--> state_db
     input <--> counter_db
-    telemetry_ --> state_db
-    telemetry_ --> counter_db
-    ptp4l <--> eth_dev
-    ptp4l <--> phc_dev
+    telemetry_ --> |updates| state_db
+    telemetry_ --> |updates| counter_db
+    ptp4l <--> |PTP packets| eth_dev
+    ptp4l <--> |programs| phc_dev
 ```
 
 
