@@ -5,44 +5,42 @@
 ### Table of Contents
 
 - [PTP Feature](#ptp-feature)
-  - [High Level Design document](#high-level-design-document)
-  - [Table of Contents](#table-of-contents)
-  - [Revision](#revision)
-  - [About this manual](#about-this-manual)
-  - [Scope](#scope)
-  - [Abbreviations](#abbreviations)
+    - [High Level Design document](#high-level-design-document)
+    - [Table of Contents](#table-of-contents)
+    - [Revision](#revision)
+    - [About this manual](#about-this-manual)
+    - [Scope](#scope)
+    - [Abbreviations](#abbreviations)
 - [1 Introduction](#1-introduction)
 - [2 Feature Design](#2-feature-design)
   - [2.1 Operational Flow](#21-operational-flow)
   - [2.2 PTP Container](#22-ptp-container)
   - [2.3 Time Distribution Network Variants](#23-time-distribution-network-variants)
     - [2.3.1 Ordinary Clock](#231-ordinary-clock)
-    - [2.3.2 Transparent Clock](#232-transparent-clock)
-    - [2.3.3 Boundary Clock](#233-boundary-clock)
+    - [2.3.2 Boundary Clock](#232-boundary-clock)
+    - [2.3.3 Transparent Clock](#233-transparent-clock)
     - [2.3.4 IPv4/IPv6 Unicast transports](#234-ipv4ipv6-unicast-transports)
     - [2.3.5 IPv4/IPv6 Multicast transports](#235-ipv4ipv6-multicast-transports)
-    - [2.3.6 L2](#236-l2)
+    - [2.3.6 L2 transport](#236-l2-transport)
   - [2.4 Hardware Features Support](#24-hardware-features-support)
     - [2.4.1 Hardware Timestamping Configuration](#241-hardware-timestamping-configuration)
     - [2.4.2 Static Delay Assymetry Configuration](#242-static-delay-assymetry-configuration)
     - [2.4.3 SyncE](#243-synce)
     - [2.4.4 G.8275.1 Support](#244-g82751-support)
-    - [2.4.5 Phase Correction](#245-phase-correction)
-  - [Linked Hardware Clocks in Multi-ASIC Devices](#linked-hardware-clocks-in-multi-asic-devices)
+  - [2.5 Chassis/Multi-ASIC support](#25-chassismulti-asic-support)
 - [3 Requirements Roadmap](#3-requirements-roadmap)
   - [3.1 Phase 1](#31-phase-1)
   - [3.2 Phase 2](#32-phase-2)
 - [4 Configuration](#4-configuration)
 - [5 Module Design](#5-module-design)
   - [5.1 PTP Container](#51-ptp-container)
-  - [5.2 PTP orchagent](#52-ptp-orchagent)
+  - [5.2 orchagent](#52-orchagent)
   - [5.3 Syncd Updates](#53-syncd-updates)
-  - [5.4 SAI Updates](#54-sai-updates)
+  - [5.4 SAI Interface](#54-sai-interface)
   - [5.5 SAI implementations and ASIC Device Driver Updates](#55-sai-implementations-and-asic-device-driver-updates)
   - [5.6 Linux Ethernet Device Update](#56-linux-ethernet-device-update)
   - [5.7 PHC Device](#57-phc-device)
 - [6 Testing](#6-testing)
-- [6.1 Phase 1 Testing](#61-phase-1-testing)
 
 ### Revision
 
@@ -86,11 +84,11 @@ This document is the high level design document for running a SONiC switch as a 
 
 # 1 Introduction
 
-Certain distributed applications require good time synchronize across nodes.  For applications that require time synchronization on the order of ten milliseconds, NTP can run on nodes and may already be sufficient.  For applications that require time synchronization on the order of milliseconds or better, PTPv2 is the industry-standard network protocol for achieving such time synchronization.  In PTPv2 deployments, running PTP boundary clocks or PTP transparent clocks on network switches between nodes and authoritative time sources will improve the accuracy and the scalability of the solution.  By enabling the PTP feature and applying PTP configurations, SONiC switches will be able to operate as PTPv2 clocks.
+Certain distributed applications require good time synchronization across nodes.  For applications that require time synchronization on the order of ten milliseconds, NTP can run on nodes and may already be sufficient.  For applications that require time synchronization on the order of milliseconds or better, PTPv2 is the industry-standard network protocol for achieving such time synchronization.  In PTPv2 deployments, running PTP boundary clocks or PTP transparent clocks on network switches between nodes and authoritative time sources will improve the accuracy and the scalability of the solution.  By enabling the PTP feature and applying PTP configurations, SONiC switches will be able to operate as PTPv2 clocks.
 
 # 2 Feature Design
 
-PTP is an [optional feature application](../optional-feature-control/Optional-Feature-Control.md) that can be enabled or disabled.  When the PTP feature is enabled, SONiC will launch its PTP container on a per-ASIC namespace basis.  The PTP container operates as a PTPv2 boundary, ordinary, or transparent clock, depending on the configuration. The PTP protocol stack is handled by open-source ptp4l.  The PTP feature implements PTPv2.1 and will not support PTPv1 protocol.  It works on ports attached to ASICs and is not applicable to out-of-band management ports.
+PTP is an [optional feature application](../optional-feature-control/Optional-Feature-Control.md) that can be enabled or disabled.  When the PTP feature is enabled, SONiC will launch its PTP container on a per-ASIC namespace basis.  The PTP container operates as a PTPv2 boundary, ordinary, or transparent clock, depending on the configuration. The PTP protocol stack is handled by open-source ptp4l.  The PTP feature implements PTPv2.1 and will not support PTPv1 protocol.  It works on ports attached to ASICs and is not applicable to out-of-band management ports.  On Broadcom based ASICs, the feature is supported using OneSync firmware and kernel drivers.
 
 ## 2.1 Operational Flow
 
@@ -171,7 +169,6 @@ title: PTP operational flow
 ```
 
 
-
 ## 2.2 PTP Container
 
 The PTP protocol stack is processed in the PTP container.  When SONiC launches the PTP service, one instance of the PTP container runs in each ASIC namespace.
@@ -188,13 +185,13 @@ The ptp4l process may operate as boundary clock, ordinary clock, or transparent 
 
 Ordinary Clock operation mode is when the SONiC network device recovers time from upstream master.
 
-### 2.3.2 Transparent Clock
-
-Transparent Clock operation mode is when the SONiC network device timestamps PTP event messages.  Transparent clocks can be configured to operate in either E2E mode or P2P mode.
-
-### 2.3.3 Boundary Clock
+### 2.3.2 Boundary Clock
 
 Boundary Clock operation mode is when the SONiC network device recovers time from upstream master and serves as potential master to other network devices.
+
+### 2.3.3 Transparent Clock
+
+Transparent Clock operation mode is when the SONiC network device timestamps PTP event messages.  Transparent clocks can be configured to operate in either E2E mode or P2P mode.
 
 ### 2.3.4 IPv4/IPv6 Unicast transports
 
@@ -214,8 +211,7 @@ Different PTPv2 deployments can have orders of magnitude differences in the accu
 
 ### 2.4.1 Hardware Timestamping Configuration
 
-PTPv2 can use Ethernet ports with can be configured for hardware timestamping, 
-Hardware timestamping can be configured to operate in one-step hardware timestamping mode or two-step hardware timestamping mode.
+PTPv2 can use Ethernet ports which can be configured for hardware timestamping. Hardware timestamping can be configured to operate in one-step hardware timestamping mode or two-step hardware timestamping mode.
 
 ### 2.4.2 Static Delay Assymetry Configuration
 
@@ -235,9 +231,11 @@ G8275.1 requires support for SyncE, uses alternate BCMA logic, and can recover f
 
 There are currently no target use cases that require this feature, and no further design details have been defined.
 
-## 2.5 Linked Hardware Clocks in Multi-ASIC Devices
+## 2.5 Chassis/Multi-ASIC support
 
-With per-ASIC namespace instantiation of the PTP container, ptp4l operates with the assumption that each ASIC has a PHC that can be adjusted independently.  Some multi-device/multi-ASIC clock systems may not adhere to this assumption and have PHCs for multi-ASICs that are tied together.  Phase 2 may require support for this kind of hardware, however no design details have been defined and is TBD.
+A chassis based system has multiple linecards with multiple ASICs in each line card.  Since each ASIC runs in different namespace, there will be a PTP container running in each namespace.  On these systems, there will be an internal ptp session running between namespaces over the recycle port.  The same applies to VOQ based pizza boxes with multiple ASICs.
+
+Some multi-device/multi-ASIC clock systems may not adhere to this assumption and have PHCs for multi-ASICs that are tied together.  Phase 2 may require support for this kind of hardware, however no design details have been defined and is TBD.
 
 # 3 Requirements Roadmap
 
@@ -245,9 +243,7 @@ Development of the PTP feature will proceed in phases.  Software support for har
 
 ## 3.1 Phase 1
 
-Phase 1 will support hardware timestamping.
-Testing will validate the PTP feature on single-ASIC pizza box SONiC network devices configured to run a PTPv2 BC, over unicast IPv4 transport, with default IEEE-1588 profle, using one-step hardware timestamping.
-Phase 1 is part of 26.11 release.
+Phase 1 will support G.8275.2 profile using one-step hardware timestamping on Broadcom TH6 based single-ASIC pizza box.  Both IPv4 and IPv6 over udp and BC and OC modes will be supported. Phase 1 is targetted for 202611 release.
 
 ## 3.2 Phase 2
 
@@ -255,32 +251,44 @@ Testing will validate the PTP feature on multi-device multi-ASIC SONiC network d
 
 # 4 Configuration
 
-All ptp4l configuration will be handled by updating /etc/ptp4l.conf file
-
 The following new commands will be introduced in SONiC
 
-```bash
+
 Enable/Disable PTP feature on a particular device:
+```bash
 config feature state ptp enabled/disabled
-
-Enable/disable PTP on a particular interace:
-config ptp port add/remove <interface name>
-
-The following commands will have an entry for ptp
+```
+The following commands will have an entry for ptp:
+```bash
 show feature config 
 show feature status
+```
 
+PTP Configuration Commands
+```bash
+config ptp port add/remove <interface name> master <ipv4/ipv6 address>
+config ptp domain-number <domain number>
+do we provide similar commands for vlan/port channel?
+do we need sync/announce values configuration?
+```
 Show which ports have PTP enabled/disabled:
+```bash
 show ptp port status
+```
 
 Shows ptp status:
+```bash
 show ptp status
+```
 
 Shows ptp interface counters:
+```bash
 show ptp counters <interface name>
+```
 
 Clears ptp counters on all ports:
-clear ptp counters
+```bash
+sonic-clear ptp counters
 ```
 
 # 5 Module Design
@@ -298,7 +306,7 @@ The telemetry feed is new process that will read information out of ptp4l throug
 
 ## 5.2 orchagent
 
-Switch orch will recognize a switch_ptp_mode attribute and translate it into SAI_SWITCH_ATTR_PORT_PTP_MODE for ASIC_DB.  Port orch will recognize port_ptp_mode attribute and translate it into SAI_PORT_ATTR_PTP_MODE.
+Switch orch will recognize a switch_ptp_mode attribute and translate it into SAI_SWITCH_ATTR_PORT_PTP_MODE for ASIC_DB.  Port orch will recognize port_ptp_mode attribute and translate it into SAI_PORT_ATTR_PTP_MODE.  There will be a copp rule added to handle PTP packets
 
 ## 5.3 Syncd Updates
 
